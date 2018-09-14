@@ -162,9 +162,9 @@ def migrate(e1, e2, metadata, convert_map=None, populate_fn=None, only_tables=No
 
         log.info("Migrating table: {0}".format(table_name))
 
-        convert = convert_map.get(table_name)
+        convert = convert_map.get(table_name) or convert_map.get(table_name.lower())
         if not convert:
-            new_table = metadata_new.tables.get(table_name)
+            new_table = metadata_new.tables.get(table_name) or metadata_new.tables.get(table_name.lower())
             if new_table is None:
                 log.info("No corresponding table found, skipping: {0}".format(table_name))
                 continue
@@ -173,7 +173,7 @@ def migrate(e1, e2, metadata, convert_map=None, populate_fn=None, only_tables=No
             continue
 
         for new_table_name, convert_fn in convert:
-            new_table = metadata_new.tables.get(new_table_name)
+            new_table = metadata_new.tables.get(new_table_name) or metadata_new.tables.get(table_name.lower())
             table_migrate(e1, e2, table, new_table, convert_fn=convert_fn, limit=limit)
 
 
