@@ -35,20 +35,26 @@ def visit_insert_from_select(element, compiler, **kw):
 ##
 
 
-def table_migrate(e1, e2, table, table2=None, convert_fn=None, limit=100000):
+def table_migrate(e1, e2, table, table2=None, convert_fn=None, limit=10000):
     if table2 is None:
         table2 = table
 
     count = e1.execute(table.count()).scalar()
 
+    primary_key_name = list(table2.primary_key)[0].name
+
+    e2.execute(table2.delete())
+
     log.debug("Inserting {0} rows into: {1}".format(count, table2.name))
     for offset in range(0, count, limit):
         # FIXME: There's an off-by-one bug here?
-        q = e1.execute(table.select().offset(offset).limit(limit))
+        q = e1.execute(table.select().order_by(
+            sqlalchemy.text(primary_key_name)
+        ).offset(offset).limit(limit))
 
         data = q.fetchall()
         if not data:
-               continue
+            continue
 
         if convert_fn:
             r = []
@@ -130,6 +136,12 @@ def migrate_replace(e, metadata, only_tables=None, skip_tables=None):
         table_replace(table, table_new)
 
 
+def lowercase_columns(old_table, new_table, row):
+    new_row = {}
+    for key, value in dict(row).items():
+        new_row[key.lower()] = value
+    return new_row
+
 
 def migrate(e1, e2, metadata, convert_map=None, populate_fn=None, only_tables=None, skip_tables=None, limit=100000):
     """
@@ -161,15 +173,13 @@ def migrate(e1, e2, metadata, convert_map=None, populate_fn=None, only_tables=No
             continue
 
         log.info("Migrating table: {0}".format(table_name))
-
         convert = convert_map.get(table_name) or convert_map.get(table_name.lower())
         if not convert:
             new_table = metadata_new.tables.get(table_name) or metadata_new.tables.get(table_name.lower())
             if new_table is None:
                 log.info("No corresponding table found, skipping: {0}".format(table_name))
                 continue
-
-            table_migrate(e1, e2, table, new_table, limit=limit)
+            table_migrate(e1, e2, table, new_table, convert_fn=lowercase_columns, limit=limit)
             continue
 
         for new_table_name, convert_fn in convert:
