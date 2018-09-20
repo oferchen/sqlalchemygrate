@@ -35,7 +35,7 @@ def visit_insert_from_select(element, compiler, **kw):
 ##
 
 
-def table_migrate(e1, e2, table, table2=None, convert_fn=None, limit=10000):
+def table_migrate(e1, e2, table, table2=None, convert_fn=None, limit=1000):
     if table2 is None:
         table2 = table
 
@@ -143,7 +143,7 @@ def lowercase_columns(old_table, new_table, row):
     return new_row
 
 
-def migrate(e1, e2, metadata, convert_map=None, populate_fn=None, only_tables=None, skip_tables=None, limit=100000):
+def migrate(e1, e2, metadata, convert_map=None, populate_fn=None, only_tables=None, skip_tables=None, limit=1000):
     """
     :param e1: Source engine (schema reflected)
     :param e2: Target engine (schema generated from ``metadata``)
