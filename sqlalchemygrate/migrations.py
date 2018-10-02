@@ -43,7 +43,7 @@ def table_migrate(e1, e2, table, table2=None, convert_fn=None, limit=10000):
 
     primary_key_name = list(table2.primary_key)[0].name
 
-    e2.execute(table2.delete())
+    # e2.execute(table2.delete())
 
     log.debug("Inserting {0} rows into: {1}".format(count, table2.name))
     for offset in range(0, count, limit):
@@ -55,6 +55,11 @@ def table_migrate(e1, e2, table, table2=None, convert_fn=None, limit=10000):
         data = q.fetchall()
         if not data:
             continue
+
+        # FIXME
+        primary_keys = tuple(x[0] for x in data)
+
+        e2.execute(f'DELETE FROM {table2} WHERE {primary_key_name} IN {primary_keys}')
 
         if convert_fn:
             r = []
