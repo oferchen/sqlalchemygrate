@@ -43,7 +43,7 @@ def table_migrate(e1, e2, table, table2=None, convert_fn=None, limit=10000):
 
     primary_key_name = list(table2.primary_key)[0].name
 
-    e2.execute(table2.delete())
+    # e2.execute(table2.delete())
 
     log.debug("Inserting {0} rows into: {1}".format(count, table2.name))
     for offset in range(0, count, limit):
@@ -67,7 +67,10 @@ def table_migrate(e1, e2, table, table2=None, convert_fn=None, limit=10000):
             data = r
 
         if data:
-            e2.execute(table2.insert(), data).close()
+            primary_keys = tuple(row[primary_key_name] for row in data)
+            with e2.begin():
+                e2.execute(sqlalchemy.text(f'DELETE FROM {table2} WHERE {primary_key_name} IN :primary_keys'), primary_keys=primary_keys)
+                e2.execute(table2.insert(), data).close()
         log.debug("-> Inserted {0} rows into: {1}".format(len(data), table2.name))
 
 
