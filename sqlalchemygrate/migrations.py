@@ -20,7 +20,7 @@ def visit_insert_from_select(element, compiler, **kw):
     insert_columns = [col.name for col in element.select.columns]
     select = element.select
 
-    for k,v in element.defaults.iteritems():
+    for k,v in element.defaults.items():
         insert_columns.append(k)
         # TODO: Add intelligent casting of values
         select.append_column(sqlalchemy.literal(v))
